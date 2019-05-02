@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
     // Calculated how many entries will be needed for sampling
     unsigned int timestamp_entries = duration / interval;
     timestamps = malloc(timestamp_entries * sizeof(unsigned long));
+    unsigned int interval_ms = interval * 1000;
+
     for (unsigned int counter_timestamps = 0; counter_timestamps < timestamp_entries; counter_timestamps++) {
 
         unsigned long time_ms = get_time_ms();
@@ -40,8 +42,9 @@ int main(int argc, char **argv) {
         timestamps[counter_timestamps] = time_ms;
         counter_timestamps++;
         // Sleep for ${interval} seconds
-        sleep(interval);
+
         fprintf(f, "%ld,", time_ms);
+        usleep(interval_ms);
     }
     fclose(f);
 

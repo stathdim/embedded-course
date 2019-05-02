@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
         fprintf(f, "%ld,", time_ms);
 
         // Sleep for ${interval} seconds
-        usleep( timestamps[counter_timestamps-1]+interval_ms-get_time_ms());
+        usleep(timestamps[counter_timestamps-1]+interval_ms-get_time_ms());
 
     }
     fclose(f);
