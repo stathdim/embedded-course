@@ -1,7 +1,7 @@
 import plotly.plotly as py
 import plotly.graph_objs as go
 import csv
-from statistics import mean 
+from statistics import mean, pstdev, median
 
 def read_values(filename):
     timestamps_list = []
@@ -30,5 +30,13 @@ timestamps_without = read_values("without_gettimeofday.csv")
 distances_gettimeofday = calc_samples_distances(timestamps_gettimeofday)
 distances_without = calc_samples_distances(timestamps_without)
 
-print(mean(distances_without))
-print(mean(distances_gettimeofday))
+mean_gettimeofday = mean(distances_gettimeofday)
+mean_without = mean(distances_without)
+
+stdev_gettimeofday = pstdev(distances_gettimeofday)
+stdev_without = pstdev(distances_without)
+
+median_gettimeofday = median(distances_gettimeofday)
+median_without = median(distances_without)
+
+print(median_gettimeofday, median_without)
