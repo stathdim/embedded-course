@@ -39,4 +39,6 @@ stdev_without = pstdev(distances_without)
 median_gettimeofday = median(distances_gettimeofday)
 median_without = median(distances_without)
 
-print(median_gettimeofday, median_without)
+print(f'Mean is: {mean_gettimeofday}, {mean_without}' )
+print(f'Standard deviation is {stdev_gettimeofday}, {stdev_without}')
+print(f'The median is {median_gettimeofday}, {median_without}')
