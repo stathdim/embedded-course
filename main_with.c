@@ -27,9 +27,6 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-
-    printf("Version using gettimeofday value. Duration is %d with an interval of %.2lf between samples\n", duration, interval);
-
     // Calculated how many entries will be needed for sampling
     unsigned int timestamp_entries = duration / interval;
     unsigned int interval_ms = interval * 1000;
@@ -39,11 +36,10 @@ int main(int argc, char **argv) {
         unsigned long time_ms = get_time_ms();
 
         timestamps[counter_timestamps] = time_ms;
-        counter_timestamps++;
         fprintf(f, "%ld,", time_ms);
 
         // Sleep for ${interval} seconds
-        usleep(timestamps[counter_timestamps-1]+interval_ms-get_time_ms());
+        usleep((timestamps[counter_timestamps]+interval_ms-get_time_ms())*1000);
 
     }
     fclose(f);
