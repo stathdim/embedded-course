@@ -2,16 +2,26 @@
 #include <sys/time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
+#include <pthread.h>
 
 unsigned long get_time_ms();
+void alarm_handler(int signum);
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv)
+{
 
-    if (argc < 3) {
+    if (argc < 3)
+    {
         printf("Invalid number of arguments.\n");
         return 1;
     }
+    // // Setup the action handler
+    // struct sigaction action;
 
+    // action.sa_handler = alarm_handler;
+
+    // sigaction(SIGALRM, &action, NULL);
     char *noise;
 
     unsigned long *timestamps;
@@ -32,22 +42,41 @@ int main(int argc, char **argv) {
     unsigned int interval_us = interval * 1000000;
     timestamps = malloc(timestamp_entries * sizeof(unsigned long));
 
-    for (unsigned int counter_timestamps = 0; counter_timestamps < timestamp_entries; counter_timestamps++) {
+    pid_t pid;
+    (void)signal(SIGALRM, alarm_handler);
+
+    for (unsigned int counter_timestamps = 0; counter_timestamps < timestamp_entries; counter_timestamps++)
+    {
 
         unsigned long time_ms = get_time_ms();
 
         timestamps[counter_timestamps] = time_ms;
         fprintf(f, "%ld,", time_ms);
+        // printf("%ld,\n", time_ms);
 
-        // Sleep for ${interval} seconds
-        usleep(interval_us);
+        pid = fork();
+        switch (pid)
+        {
+        case -1:
+            /* Failure */
+            perror("fork failed");
+            exit(1);
+        case 0:
+            /* child */
+            usleep(interval_us);
+            kill(getppid(), SIGALRM);
+            exit(0);
+        }
+        pause();
+
     }
     fclose(f);
 
     return 0;
 }
 
-unsigned long get_time_ms() {
+unsigned long get_time_ms()
+{
     struct timeval tv;
     gettimeofday(&tv, NULL);
     // Get the microseconds of the timestamp and convert them to milliseconds
@@ -56,4 +85,8 @@ unsigned long get_time_ms() {
     unsigned long current_time_s_to_ms = tv.tv_sec * 1000;
     // Calc the current timestamp in ms and return it
     return current_time_s_to_ms + current_time_us_to_ms;
+}
+
+void alarm_handler(int signum)
+{
 }
