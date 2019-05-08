@@ -61,14 +61,22 @@ int main(int argc, char **argv)
             perform_sampling = 0;
             time_ms = get_time_ms();
             timestamps[counter_timestamps] = time_ms;
-            fprintf(f, "%d\n", counter_timestamps);
-            long wait = (time_ms + interval_ms - get_time_ms()) * 1000;
-            printf("%ld!\n", wait);
-            // ualarm(100000, 0);
-            uralarm(interval_ms*100, 0);
+            fprintf(f, "%ld\n", get_time_ms());
+            struct itimerval t;
+            long wait = (time_ms + interval_ms - get_time_ms());
+            t.it_value.tv_sec = wait / 1000;
+            t.it_value.tv_usec = (wait * 1000) % 1000000;
+
+            t.it_interval = t.it_value;
+
+            if (setitimer(ITIMER_REAL, &t, NULL) == -1)
+            {
+                perror("error calling setitimer()");
+                exit(1);
+            }
         }
-        else {
-            printf("bard");
+        else
+        {
         }
         pause();
         // usleep((time_ms + interval_ms - get_time_ms()) * 1000);

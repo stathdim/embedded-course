@@ -8,8 +8,8 @@ def read_values(filename):
         csv_reader = csv.reader(csv_file, delimiter=',')
         line_count = 0
         for row in csv_reader:
+            print(row)
             # Remove the last el which is '' to avoid failure during typecasting
-            row.pop()
             for val in row:
                 timestamps_list.append(int(val))
     return timestamps_list
@@ -25,6 +25,7 @@ def calc_samples_distances(samples):
 
 timestamps_gettimeofday = read_values("with_gettimeofday.csv")
 timestamps_without = read_values("without_gettimeofday.csv")
+
 
 print(timestamps_without[-1] - timestamps_without[0])
 
