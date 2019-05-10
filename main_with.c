@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <sys/time.h>
+#include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -8,10 +9,11 @@
 unsigned long get_time_ms();
 static void alarm_handler(int signum);
 
-static volatile sig_atomic_t perform_sampling = 0;
+static volatile sig_atomic_t perform_sampling = 1;
 
 int main(int argc, char **argv)
-{
+{   
+    printf("with called\n");
 
     if (argc < 3)
     {
@@ -34,10 +36,10 @@ int main(int argc, char **argv)
     char *noise;
     unsigned long *timestamps;
 
-    // Convert input to long int and double
+    // Convert input to long int and float
     // Use the strto* family of functions to store unwanted text input to a pointer
-    unsigned int duration = strtol(argv[1], &noise, 10);
-    double interval = strtod(argv[2], &noise);
+    float duration = strtof(argv[1], &noise);
+    float interval = strtof(argv[2], &noise);
     // Replace old records
     FILE *f = fopen("with_gettimeofday.csv", "w");
     if (f == NULL)
@@ -47,40 +49,63 @@ int main(int argc, char **argv)
     }
 
     // Calculated how many entries will be needed for sampling
-    unsigned int timestamp_entries = duration / interval;
-    unsigned int interval_ms = interval * 1000;
+
+    unsigned int timestamp_entries = (int)(duration / interval + 1);
+    //A us resolution is enough for our needs, thus we use a long data type and not
+    // a float.
+    long interval_ms = interval * 1000;
+
+    unsigned int duration_ms = duration * 1000;
     timestamps = malloc(timestamp_entries * sizeof(unsigned long));
 
-    perform_sampling = 1;
+    struct itimerval t_timer;
+    t_timer.it_value.tv_sec = duration_ms / 1000.0;
+    t_timer.it_value.tv_usec = (duration_ms * 1000) % 1000000;
 
-    for (unsigned int counter_timestamps = 0; counter_timestamps < timestamp_entries; counter_timestamps++)
+    t_timer.it_interval = t_timer.it_value;
+    if (setitimer(ITIMER_REAL, &t_timer, NULL) == -1)
     {
-        unsigned long time_ms;
-        if (perform_sampling)
+        perror("error calling setitimer()");
+        exit(1);
+    }
+
+    struct timespec t_sleep, t_rem;
+    t_sleep.tv_sec = (int)interval_ms / 1000;
+    t_sleep.tv_nsec = (interval_ms * 1000000) % 1000000000;
+    ;
+    unsigned int counter_timestamps = 0;
+    unsigned long difference = 0;
+    // When the timer expires the perform_sampling flag will be toggled
+    while (perform_sampling)
+    {
+        unsigned long current_time = get_time_ms();
+        timestamps[counter_timestamps] = current_time;
+
+        if (counter_timestamps > 1)
+            difference = current_time - timestamps[counter_timestamps - 1];
+        counter_timestamps++;
+        if (difference > 1.001 * interval_ms)
         {
-            perform_sampling = 0;
-            time_ms = get_time_ms();
-            timestamps[counter_timestamps] = time_ms;
-            fprintf(f, "%ld\n", get_time_ms());
-            struct itimerval t;
-            long wait = (time_ms + interval_ms - get_time_ms());
-            t.it_value.tv_sec = wait / 1000;
-            t.it_value.tv_usec = (wait * 1000) % 1000000;
-
-            t.it_interval = t.it_value;
-
-            if (setitimer(ITIMER_REAL, &t, NULL) == -1)
-            {
-                perror("error calling setitimer()");
-                exit(1);
-            }
+            usleep((interval_ms - (difference - interval_ms)) * 1000) ;
         }
         else
         {
+            if (nanosleep(&t_sleep, &t_rem) < 0)
+            {
+                if (!perform_sampling)
+                    break;
+                printf("Nano sleep system call failed \n");
+                return -1;
+            }
         }
-        pause();
-        // usleep((time_ms + interval_ms - get_time_ms()) * 1000);
     }
+
+    // Write timestamps to file
+    for (int i = 0; i < counter_timestamps; i++)
+    {
+        fprintf(f, "%ld\n", timestamps[i]);
+    }
+
     fclose(f);
     return 0;
 }
@@ -99,5 +124,5 @@ unsigned long get_time_ms()
 
 static void alarm_handler(int signum)
 {
-    perform_sampling = 1;
+    perform_sampling = 0;
 }
