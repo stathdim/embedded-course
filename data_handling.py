@@ -56,7 +56,8 @@ print('Standard deviation is', stdev_gettimeofday, stdev_without)
 print('The median is ', median_gettimeofday, median_without)
 print(f'Max difference is {max_gettimeofday} and {max_without}')
 print(f'Min difference is {min_gettimeofday} and {min_without}')
-
+print(
+    f'Samples where {len(timestamps_gettimeofday)} and {len(timestamps_without)}')
 plt.figure(1, figsize=(14, 10))
 plt.plot(distances_gettimeofday, '.')
 plt.savefig('distances.png', bbox_inches='tight')
