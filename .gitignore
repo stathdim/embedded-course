@@ -73,3 +73,6 @@ env
 main
 main_with
 main_without
+
+# Plots
+*.png
